@@ -3,6 +3,7 @@ package render.renders;
 import loader.Shader;
 import loader.Texture;
 import org.joml.Matrix4f;
+import org.joml.Vector3f;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.system.MemoryUtil;
 
@@ -24,30 +25,70 @@ public class MeshRender {
     private int VAO, VBO, EBO, textureVBO;
     private final Shader shader;
     private final Texture texture1, texture2;
+    private Matrix4f view;
+    private Matrix4f projection;
     private final float[] vertices = {
-          //x      y
-           -0.5f, -0.5f, 0.0f,
-            0.5f, -0.5f, 0.0f,
-            0.5f,  0.5f, 0.0f,
-           -0.5f,  0.5f, 0.0f
-    };
+            -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+             0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
+             0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+            -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
 
-    private final float[] texCoords = {
-            0.0f, 0.0f, 0.0f,  // lower-left corner
-            1.0f, 0.0f, 0.0f,  // lower-right corner
-            1.0f, 1.0f, 0.0f,   // top-center corner
-            0.0f, 1.0f, 0.0f   // top-left corner
+            -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+             0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+             0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+            -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
+
+            -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+            -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+            -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+            -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+
+            0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+            0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+            0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+            0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+
+            -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+             0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
+             0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+            -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+
+            -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+             0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+             0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+            -0.5f,  0.5f,  0.5f,  0.0f, 0.0f
     };
 
     private final int[] indices = {
+            // face 1
             0, 1, 2,  // Triangle 1
-            2, 3, 0   // Triangle 2
+            2, 3, 0,   // Triangle 2
+
+            //face 2
+            4, 5, 6,  // Triangle 1
+            6, 7, 4,    // Triangle 2
+
+            //face 3
+            8, 9, 10,  // Triangle 1
+            10, 11, 8,   // Triangle 2
+
+            //face 4
+            12, 13, 14,  // Triangle 1
+            14, 15, 12   // Triangle 2
+
+            //face 5
+            ,16, 17, 18,  // Triangle 1
+            18, 19, 16   // Triangle 2
+
+            //face 6
+            ,20, 21, 22,  // Triangle 1
+            22, 23, 20   // Triangle 2
     };
 
     public MeshRender() {
         shader = new Shader("basic");
         try {
-            texture1 = new Texture("wall");
+            texture1 = new Texture("container");
             texture2 = new Texture("awesomeface");
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -66,37 +107,47 @@ public class MeshRender {
         IntBuffer indexBuffer = MemoryUtil.memAllocInt(indices.length);
         indexBuffer.put(indices).flip();
 
-        FloatBuffer textureBuffer = MemoryUtil.memAllocFloat(texCoords.length);
-        textureBuffer.put(texCoords).flip();
-
         glBindVertexArray(VAO);
 
         glBindBuffer(GL_ARRAY_BUFFER, VBO);
         glBufferData(GL_ARRAY_BUFFER, vertexBuffer, GL_STATIC_DRAW);
-        glVertexAttribPointer(0, 3, GL_FLOAT, false, 3 * Float.BYTES, 0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, false, 5 * Float.BYTES, 0);
         glEnableVertexAttribArray(0);
 
-        glBindBuffer(GL_ARRAY_BUFFER, textureVBO);
-        glBufferData(GL_ARRAY_BUFFER, textureBuffer, GL_STATIC_DRAW);
-        glVertexAttribPointer(1, 3, GL_FLOAT, false, 3 * Float.BYTES, 0);
+        glVertexAttribPointer(1, 2, GL_FLOAT, false, 5 * Float.BYTES, 3 * Float.BYTES);
         glEnableVertexAttribArray(1);
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexBuffer, GL_STATIC_DRAW);
         glBindVertexArray(0);
+
+        setupMatrix(new Vector3f(0.0f, 0.0f, -5.0f));
+    }
+
+    private void setupMatrix(Vector3f position) {
+        view = new Matrix4f();
+        view.translate(position);
+        FloatBuffer matrixBufferView = BufferUtils.createFloatBuffer(16);
+        view.get(matrixBufferView);
+
+        projection = new Matrix4f();
+        projection.perspective((float)Math.toRadians(45.0f), 1280f/800f, 0.1f, 100.0f);
+        FloatBuffer matrixBufferProjection = BufferUtils.createFloatBuffer(16);
+        projection.get(matrixBufferProjection);
+
     }
 
     public void render() {
-        Matrix4f transform = new Matrix4f(); // JOML matrices sont initialisées à l'identité par défaut
-        transform.translate(0.5f, -0.5f, 0.0f);
-        transform.rotate((float)glfwGetTime(), 0.0f, 0.0f, 1.0f);
+        Matrix4f model = new Matrix4f();
+        model.rotate((float) ((float)glfwGetTime() * Math.toRadians(45)), 1.0f, 0.5f, 0.0f);
+        FloatBuffer matrixBufferModel = BufferUtils.createFloatBuffer(16);
+        model.get(matrixBufferModel);
 
         shader.use();
 
-        FloatBuffer matrixBuffer = BufferUtils.createFloatBuffer(16);
-        transform.get(matrixBuffer);
-        glUniformMatrix4fv(shader.getUniforms().setInt("transform", 1), false, matrixBuffer);
-
+        shader.getUniforms().setMatrix4f("view", view);
+        shader.getUniforms().setMatrix4f("projection", projection);
+        shader.getUniforms().setMatrix4f("model", model);
         shader.getUniforms().setInt("texture1", 0);
         shader.getUniforms().setInt("texture2", 1);
 
@@ -107,7 +158,7 @@ public class MeshRender {
         glBindTexture(GL_TEXTURE_2D, texture2.getTextureID());
 
         glBindVertexArray(VAO);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
 
     }
