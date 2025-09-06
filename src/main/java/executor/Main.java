@@ -18,7 +18,6 @@ public class Main {
         while(!renderer.window.windowShouldClose()) {
             renderer.render();
         }
-
         cleanup();
     }
 

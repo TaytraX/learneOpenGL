@@ -29,6 +29,7 @@ public class Renderer {
         clear();
         meshRender.render(camera);
         window.update();
+        camera.processInput(window);
     }
 
     private void clear() {

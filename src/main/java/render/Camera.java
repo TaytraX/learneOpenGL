@@ -42,10 +42,10 @@ public class Camera {
         view = new Matrix4f();
         matrixBufferView = BufferUtils.createFloatBuffer(16);
 
-        cameraPos = new Vector3f(0);
+        cameraPos = new Vector3f(0.0f, 0.0f, -10.0f);
     }
 
-    private void processInput(Window window) {
+    public void processInput(Window window) {
         if(glfwGetKey(window.getWindowID(), GLFW_KEY_W) == GLFW_PRESS) processKeyboard(FORWARD);
         else if(glfwGetKey(window.getWindowID(), GLFW_KEY_S) == GLFW_PRESS) processKeyboard(BACKWARD);
 

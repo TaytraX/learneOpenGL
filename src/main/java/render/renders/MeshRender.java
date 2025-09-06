@@ -7,6 +7,7 @@ import org.joml.Vector3f;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.system.MemoryUtil;
 import render.Camera;
+import render.Renderer;
 
 import java.io.IOException;
 import java.nio.FloatBuffer;
