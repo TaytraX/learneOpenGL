@@ -6,12 +6,12 @@ import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.system.MemoryUtil;
+import render.Camera;
 
 import java.io.IOException;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 
-import static org.lwjgl.glfw.GLFW.glfwGetTime;
 import static org.lwjgl.opengl.GL11C.GL_TRIANGLES;
 import static org.lwjgl.opengl.GL11C.GL_UNSIGNED_INT;
 import static org.lwjgl.opengl.GL11C.glDrawElements;
@@ -23,10 +23,11 @@ import static org.lwjgl.opengl.GL30C.glBindVertexArray;
 
 public class MeshRender {
     private int VAO, VBO, EBO, textureVBO;
+
     private final Shader shader;
     private final Texture texture1, texture2;
-    private Matrix4f view;
     private Matrix4f projection;
+
     private final float[] vertices = {
             -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
              0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
@@ -74,14 +75,14 @@ public class MeshRender {
 
             //face 4
             12, 13, 14,  // Triangle 1
-            14, 15, 12   // Triangle 2
+            14, 15, 12,   // Triangle 2
 
             //face 5
-            ,16, 17, 18,  // Triangle 1
-            18, 19, 16   // Triangle 2
+            16, 17, 18,  // Triangle 1
+            18, 19, 16,   // Triangle 2
 
             //face 6
-            ,20, 21, 22,  // Triangle 1
+            20, 21, 22,  // Triangle 1
             22, 23, 20   // Triangle 2
     };
 
@@ -121,33 +122,39 @@ public class MeshRender {
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexBuffer, GL_STATIC_DRAW);
         glBindVertexArray(0);
 
-        setupMatrix(new Vector3f(0.0f, 0.0f, -5.0f));
+        setupMatrix();
     }
 
-    private void setupMatrix(Vector3f position) {
-        view = new Matrix4f();
-        view.translate(position);
-        FloatBuffer matrixBufferView = BufferUtils.createFloatBuffer(16);
-        view.get(matrixBufferView);
-
+    private void setupMatrix() {
         projection = new Matrix4f();
-        projection.perspective((float)Math.toRadians(45.0f), 1280f/800f, 0.1f, 100.0f);
+        projection.perspective((float)Math.toRadians(45.0f), 1260f/800f, 0.2f, 100.0f);
         FloatBuffer matrixBufferProjection = BufferUtils.createFloatBuffer(16);
         projection.get(matrixBufferProjection);
 
     }
 
-    public void render() {
+    public void render(Camera camera) {
         Matrix4f model = new Matrix4f();
-        model.rotate((float) ((float)glfwGetTime() * Math.toRadians(45)), 1.0f, 0.5f, 0.0f);
         FloatBuffer matrixBufferModel = BufferUtils.createFloatBuffer(16);
         model.get(matrixBufferModel);
 
+        Matrix4f view = camera.getView();
+
         shader.use();
+        view.identity();
+
+        view.lookAt(
+                camera.getCameraPos(),
+                new Vector3f(0.0f, 0.0f, 0.0f),
+                new Vector3f(0.0f, 1.0f, 0.0f)
+        );
+        camera.getMatrixBufferView().clear();
+        view.get(camera.getMatrixBufferView());
 
         shader.getUniforms().setMatrix4f("view", view);
         shader.getUniforms().setMatrix4f("projection", projection);
         shader.getUniforms().setMatrix4f("model", model);
+
         shader.getUniforms().setInt("texture1", 0);
         shader.getUniforms().setInt("texture2", 1);
 

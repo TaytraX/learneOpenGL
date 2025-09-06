@@ -6,7 +6,9 @@ import window.Window;
 import static org.lwjgl.opengl.GL11.*;
 
 public class Renderer {
+    float deltaTime;
     public final Window window;
+    private Camera camera;
     private final MeshRender meshRender;
     static int height = 800;
     static int width = 1280;
@@ -14,16 +16,18 @@ public class Renderer {
     public Renderer() {
         window = new Window("Iso_Minecraft", width, height, true);
         meshRender = new MeshRender();
+        camera = new Camera(deltaTime);
         init();
     }
 
     private void init() {
+        camera.init();
         meshRender.initialize();
     }
 
     public void render() {
         clear();
-        meshRender.render();
+        meshRender.render(camera);
         window.update();
     }
 
