@@ -8,6 +8,7 @@ import org.lwjgl.BufferUtils;
 import org.lwjgl.system.MemoryUtil;
 import render.Camera;
 import render.Renderer;
+import window.Window;
 
 import java.io.IOException;
 import java.nio.FloatBuffer;
@@ -129,7 +130,7 @@ public class MeshRender {
 
     private void setupMatrix() {
         projection = new Matrix4f();
-        projection.perspective((float)Math.toRadians(45.0f), 1260f/800f, 0.2f, 100.0f);
+        projection.perspective((float)Math.toRadians(45.0f), (float) 1280/800, 0.2f, 100.0f);
         FloatBuffer matrixBufferProjection = BufferUtils.createFloatBuffer(16);
         projection.get(matrixBufferProjection);
 
@@ -144,7 +145,6 @@ public class MeshRender {
 
         shader.use();
         view.identity();
-        Vector3f target = new Vector3f(camera.getCameraPos()).add(direction);
 
         view.lookAt(
                 camera.getCameraPos(),
@@ -153,8 +153,6 @@ public class MeshRender {
         );
         camera.getMatrixBufferView().clear();
         view.get(camera.getMatrixBufferView());
-
-        System.out.println("la caméra est au coordonnées x_" + camera.getCameraPos().x + ", y_" + camera.getCameraPos().y + ", z_" + camera.getCameraPos().z);
 
         shader.getUniforms().setMatrix4f("view", view);
         shader.getUniforms().setMatrix4f("projection", projection);

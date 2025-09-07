@@ -13,7 +13,7 @@ public class Window {
 
     private final String title;
 
-    private int width, height;
+    public static int width, height;
     private long window;
     private final boolean vSync;
 
