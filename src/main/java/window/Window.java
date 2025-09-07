@@ -158,6 +158,6 @@ public class Window {
     }
 
     public long getWindowID() {
-        return window; // La variable long window de la classe
+        return window;
     }
 }

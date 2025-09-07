@@ -24,6 +24,7 @@ import static org.lwjgl.opengl.GL30C.glBindVertexArray;
 
 public class MeshRender {
     private int VAO, VBO, EBO, textureVBO;
+    private Vector3f direction = new Vector3f(0, 0, -1);
 
     private final Shader shader;
     private final Texture texture1, texture2;
@@ -143,14 +144,17 @@ public class MeshRender {
 
         shader.use();
         view.identity();
+        Vector3f target = new Vector3f(camera.getCameraPos()).add(direction);
 
         view.lookAt(
                 camera.getCameraPos(),
-                new Vector3f(0.0f, 0.0f, 0.0f),
+                camera.getCameraTarget(),
                 new Vector3f(0.0f, 1.0f, 0.0f)
         );
         camera.getMatrixBufferView().clear();
         view.get(camera.getMatrixBufferView());
+
+        System.out.println("la caméra est au coordonnées x_" + camera.getCameraPos().x + ", y_" + camera.getCameraPos().y + ", z_" + camera.getCameraPos().z);
 
         shader.getUniforms().setMatrix4f("view", view);
         shader.getUniforms().setMatrix4f("projection", projection);

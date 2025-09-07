@@ -3,10 +3,12 @@ package render;
 import render.renders.MeshRender;
 import window.Window;
 
+import static org.lwjgl.glfw.GLFW.glfwGetTime;
 import static org.lwjgl.opengl.GL11.*;
 
 public class Renderer {
     float deltaTime;
+    private double lastTime;
     public final Window window;
     private Camera camera;
     private final MeshRender meshRender;
@@ -26,10 +28,19 @@ public class Renderer {
     }
 
     public void render() {
+        // Calcul du deltaTime
+        double currentTime = glfwGetTime();
+        if (lastTime == 0.0) lastTime = currentTime;
+
+        float deltaTime = (float)(currentTime - lastTime);
+        lastTime = currentTime;
+
+        camera.setDeltaTime(deltaTime);
+
         clear();
         meshRender.render(camera);
         window.update();
-        camera.processInput(window);
+        camera.update(window);
     }
 
     private void clear() {
