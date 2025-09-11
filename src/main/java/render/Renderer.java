@@ -1,6 +1,7 @@
 package render;
 
 import render.renders.MeshRender;
+import render.renders.MeshRender2;
 import window.Window;
 
 import static org.lwjgl.glfw.GLFW.glfwGetTime;
@@ -10,21 +11,30 @@ public class Renderer {
     float deltaTime;
     private double lastTime;
     public final Window window;
-    private Camera camera;
-    private final MeshRender meshRender;
+    private final Camera camera;
+    private MeshRender meshRender = null;
+    private MeshRender2 meshRender2 = null;
     static int height = 800;
     static int width = 1280;
 
+    public int render = 2;
+
     public Renderer() {
         window = new Window("Iso_Minecraft", width, height, true);
-        meshRender = new MeshRender();
-        camera = new Camera(deltaTime);
+        camera = new Camera(deltaTime, (float) width/height);
+
+        switch(render) {
+            case 2 -> meshRender2 = new MeshRender2();
+            default -> meshRender = new MeshRender();
+        }
+
         init();
     }
 
     private void init() {
         camera.init();
-        meshRender.initialize();
+        if (render == 2) meshRender2.initialize();
+        else meshRender.initialize();
     }
 
     public void render() {
@@ -32,13 +42,15 @@ public class Renderer {
         double currentTime = glfwGetTime();
         if (lastTime == 0.0) lastTime = currentTime;
 
-        float deltaTime = (float)(currentTime - lastTime);
+        deltaTime = (float)(currentTime - lastTime);
         lastTime = currentTime;
 
         camera.setDeltaTime(deltaTime);
 
         clear();
-        meshRender.render(camera);
+
+        if (render == 2) meshRender2.render(camera);
+        else meshRender.render(camera);
         window.update();
         camera.update(window);
     }
@@ -50,6 +62,7 @@ public class Renderer {
 
     public void cleanup() {
         window.cleanup();
-        meshRender.cleanup();
+        if (render == 2) meshRender2.cleanup();
+        else meshRender.cleanup();
     }
 }

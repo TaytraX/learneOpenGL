@@ -2,6 +2,7 @@ package loader;
 
 import org.joml.Matrix4d;
 import org.joml.Matrix4f;
+import org.joml.Vector3f;
 import org.lwjgl.BufferUtils;
 
 import java.nio.FloatBuffer;
@@ -70,10 +71,10 @@ public class UniformManager {
         }
     }
 
-    public void setVec3(String name, float x, float y, float z) {
+    public void setVec3(String name, Vector3f vec) {
         Integer location = uniforms.get(name);
         if (location != null) {
-            glUniform3f(location, x, y, z);
+            glUniform3f(location, vec.x, vec.y, vec.z);
         }
     }
 

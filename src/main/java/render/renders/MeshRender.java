@@ -7,8 +7,6 @@ import org.joml.Vector3f;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.system.MemoryUtil;
 import render.Camera;
-import render.Renderer;
-import window.Window;
 
 import java.io.IOException;
 import java.nio.FloatBuffer;
@@ -25,42 +23,59 @@ import static org.lwjgl.opengl.GL30C.glBindVertexArray;
 
 public class MeshRender {
     private int VAO, VBO, EBO, textureVBO;
-    private Vector3f direction = new Vector3f(0, 0, -1);
 
     private final Shader shader;
     private final Texture texture1, texture2;
-    private Matrix4f projection;
+    private final Vector3f[] positions = {
+            new Vector3f( 0.0f,  0.0f,  0.0f),
+            new Vector3f( 2.0f,  5.0f, -15.0f),
+            new Vector3f(-1.5f, -2.2f, -2.5f),
+            new Vector3f(-3.8f, -2.0f, -12.3f),
+            new Vector3f( 2.4f, -0.4f, -3.5f),
+            new Vector3f(-1.7f,  3.0f, -7.5f),
+            new Vector3f( 1.3f, -2.0f, -2.5f),
+            new Vector3f( 1.5f,  2.0f, -2.5f),
+            new Vector3f( 1.5f,  0.2f, -1.5f),
+            new Vector3f(-1.3f,  1.0f, -1.5f)
+    };
 
-    private final float[] vertices = {
-            -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-             0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
-             0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-            -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-
-            -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-             0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-             0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-            -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
-
-            -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-            -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-            -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-            -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-
-            0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-            0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-            0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-            0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-
-            -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-             0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
-             0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-            -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-
-            -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-             0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-             0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-            -0.5f,  0.5f,  0.5f,  0.0f, 0.0f
+    private final float[][] vertices = {
+            {
+                    -0.5f, -0.5f, -0.5f,    0.0f, 0.0f,
+                     0.5f, -0.5f, -0.5f,    1.0f, 0.0f,
+                     0.5f,  0.5f, -0.5f,    1.0f, 1.0f,
+                    -0.5f,  0.5f, -0.5f,    0.0f, 1.0f
+            },
+            {
+                    -0.5f, -0.5f, 0.5f,     0.0f, 0.0f,
+                     0.5f, -0.5f, 0.5f,     1.0f, 0.0f,
+                     0.5f,  0.5f, 0.5f,     1.0f, 1.0f,
+                    -0.5f,  0.5f, 0.5f,     0.0f, 1.0f
+            },
+            {
+                    -0.5f,  0.5f,  0.5f,    1.0f, 0.0f,
+                    -0.5f,  0.5f, -0.5f,    1.0f, 1.0f,
+                    -0.5f, -0.5f, -0.5f,    0.0f, 1.0f,
+                    -0.5f, -0.5f,  0.5f,    0.0f, 0.0f
+            },
+            {
+                    0.5f,  0.5f,  0.5f,     1.0f, 0.0f,
+                    0.5f,  0.5f, -0.5f,     1.0f, 1.0f,
+                    0.5f, -0.5f, -0.5f,     0.0f, 1.0f,
+                    0.5f, -0.5f,  0.5f,     0.0f, 0.0f
+            },
+            {
+                    -0.5f, -0.5f, -0.5f,    0.0f, 1.0f,
+                     0.5f, -0.5f, -0.5f,    1.0f, 1.0f,
+                     0.5f, -0.5f,  0.5f,    1.0f, 0.0f,
+                    -0.5f, -0.5f,  0.5f,    0.0f, 0.0f
+            },
+            {
+                    -0.5f, 0.5f, -0.5f,     0.0f, 1.0f,
+                     0.5f, 0.5f, -0.5f,     1.0f, 1.0f,
+                     0.5f, 0.5f,  0.5f,     1.0f, 0.0f,
+                    -0.5f, 0.5f,  0.5f,     0.0f, 0.0f
+            }
     };
 
     private final int[] indices = {
@@ -105,8 +120,16 @@ public class MeshRender {
         EBO = glGenBuffers();
         textureVBO = glGenBuffers();
 
-        FloatBuffer vertexBuffer = MemoryUtil.memAllocFloat(vertices.length);
-        vertexBuffer.put(vertices).flip();
+        FloatBuffer vertexBuffer = MemoryUtil.memAllocFloat(120);
+
+        for (float[] face : vertices) {
+            vertexBuffer.put(face);
+        }
+        vertexBuffer.flip();
+
+        Vector3f lightColor = new Vector3f(0.33f, 0.42f, 0.18f);
+        Vector3f toyColor = new Vector3f(1.0f, 0.5f, 0.31f);
+        Vector3f result = lightColor.mul(toyColor); // = (0.33f, 0.21f, 0.06f);
 
         IntBuffer indexBuffer = MemoryUtil.memAllocInt(indices.length);
         indexBuffer.put(indices).flip();
@@ -124,39 +147,13 @@ public class MeshRender {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexBuffer, GL_STATIC_DRAW);
         glBindVertexArray(0);
-
-        setupMatrix();
-    }
-
-    private void setupMatrix() {
-        projection = new Matrix4f();
-        projection.perspective((float)Math.toRadians(45.0f), (float) 1280/800, 0.2f, 100.0f);
-        FloatBuffer matrixBufferProjection = BufferUtils.createFloatBuffer(16);
-        projection.get(matrixBufferProjection);
-
     }
 
     public void render(Camera camera) {
-        Matrix4f model = new Matrix4f();
-        FloatBuffer matrixBufferModel = BufferUtils.createFloatBuffer(16);
-        model.get(matrixBufferModel);
-
-        Matrix4f view = camera.getView();
-
         shader.use();
-        view.identity();
 
-        view.lookAt(
-                camera.getCameraPos(),
-                camera.getCameraTarget(),
-                new Vector3f(0.0f, 1.0f, 0.0f)
-        );
-        camera.getMatrixBufferView().clear();
-        view.get(camera.getMatrixBufferView());
-
-        shader.getUniforms().setMatrix4f("view", view);
-        shader.getUniforms().setMatrix4f("projection", projection);
-        shader.getUniforms().setMatrix4f("model", model);
+        shader.getUniforms().setMatrix4f("view", camera.getView());
+        shader.getUniforms().setMatrix4f("projection", camera.getProjection());
 
         shader.getUniforms().setInt("texture1", 0);
         shader.getUniforms().setInt("texture2", 1);
@@ -168,7 +165,12 @@ public class MeshRender {
         glBindTexture(GL_TEXTURE_2D, texture2.getTextureID());
 
         glBindVertexArray(VAO);
-        glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+        // Boucle pour chaque position
+        for (Vector3f position : positions) {
+            Matrix4f model = new Matrix4f().translation(position);
+            shader.getUniforms().setMatrix4f("model", model);
+            glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+        }
         glBindVertexArray(0);
 
     }

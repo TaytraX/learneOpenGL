@@ -58,6 +58,7 @@ public class Window {
 
         // Définir le contexte AVANT createCapabilities()
         glfwMakeContextCurrent(window);
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
         // MAINTENANT on peut créer les capacités OpenGL
         createCapabilities();

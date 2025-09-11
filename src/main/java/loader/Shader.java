@@ -120,7 +120,12 @@ public class Shader {
     }
 
     public UniformManager getUniforms() {
-        return uniforms;
+
+        try {
+            return uniforms;
+        } catch (NullPointerException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void use() {
