@@ -23,9 +23,10 @@ public class MeshRender2 {
     private int VAO, VBO, EBO, textureVBO;
 
     private final Shader shader;
+    private final Shader lightShader;
     private final Block[] block = {
-            new Block(new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(1.0f, 1.0f, 1.0f)),
-            new Block(new Vector3f(3.0f, -2.0f, 2.0f), new Vector3f(1.0f, 0.5f, 0.31f))
+            new Block(new Vector3f(1f), new Vector3f(0.0f, 0.0f, 0.0f), new Vector3f(1.0f, 1.0f, 1.0f)),
+            new Block(new Vector3f(18.0f, 3.0f, 18.0f), new Vector3f(0.0f, -4.0f, 0.0f), new Vector3f(1.0f, 0.5f, 0.31f))
     };
 
     private final Vector3f lightPos = block[0].position();
@@ -97,6 +98,7 @@ public class MeshRender2 {
 
     public MeshRender2() {
         shader = new Shader("basic2");
+        lightShader = new Shader("light_emissive");
     }
 
     public void initialize() {
@@ -131,29 +133,42 @@ public class MeshRender2 {
     }
 
     public void render(Camera camera) {
-        shader.use();
-
-        shader.getUniforms().setMatrix4f("view", camera.getView());
-        shader.getUniforms().setMatrix4f("projection", camera.getProjection());
-        shader.getUniforms().setVec3("viewPos", camera.getPosition());
-
         glBindVertexArray(VAO);
-        // Boucle pour chaque position
-        for (Block aBlock : block) {
-            Matrix4f model = new Matrix4f().translation(aBlock.position());
-            shader.getUniforms().setMatrix4f("model", model);
-            shader.getUniforms().setVec3("objectColor", aBlock.color());
-            shader.getUniforms().setVec3("lightColor", block[0].color());
-            shader.getUniforms().setVec3("lightPos", lightPos);
+        Matrix4f model;
+
+        for (int i = 0; i < block.length; i++) {
+            Block aBlock = block[i];
+            model = new Matrix4f()
+                    .translation(aBlock.position())
+                    .scale(aBlock.size());
+
+            if (i == 0) {
+                // Source lumineuse
+                lightShader.use();  // Shader émissif
+                lightShader.getUniforms().setMatrix4f("model", model);
+                lightShader.getUniforms().setMatrix4f("view", camera.getView());
+                lightShader.getUniforms().setMatrix4f("projection", camera.getProjection());
+                lightShader.getUniforms().setVec3("lightColor", aBlock.color());
+            } else {
+                // Objets éclairés
+                shader.use();  // Shader Phong
+                shader.getUniforms().setMatrix4f("model", model);
+                shader.getUniforms().setMatrix4f("view", camera.getView());
+                shader.getUniforms().setMatrix4f("projection", camera.getProjection());
+                shader.getUniforms().setVec3("objectColor", aBlock.color());
+                shader.getUniforms().setVec3("lightColor", new Vector3f(0.6f));
+                shader.getUniforms().setVec3("lightPos", lightPos);
+                shader.getUniforms().setVec3("viewPos", camera.getPosition());
+            }
 
             glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
         }
         glBindVertexArray(0);
-
     }
 
     public void cleanup() {
         shader.cleanUp();
+        lightShader.cleanUp();
 
         glDeleteVertexArrays(VAO);
         glDeleteBuffers(VBO);
