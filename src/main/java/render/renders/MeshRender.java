@@ -127,10 +127,6 @@ public class MeshRender {
         }
         vertexBuffer.flip();
 
-        Vector3f lightColor = new Vector3f(0.33f, 0.42f, 0.18f);
-        Vector3f toyColor = new Vector3f(1.0f, 0.5f, 0.31f);
-        Vector3f result = lightColor.mul(toyColor); // = (0.33f, 0.21f, 0.06f);
-
         IntBuffer indexBuffer = MemoryUtil.memAllocInt(indices.length);
         indexBuffer.put(indices).flip();
 
@@ -158,13 +154,13 @@ public class MeshRender {
         shader.getUniforms().setInt("texture1", 0);
         shader.getUniforms().setInt("texture2", 1);
 
+        glBindVertexArray(VAO);
+
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture1.getTextureID());
 
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, texture2.getTextureID());
-
-        glBindVertexArray(VAO);
         // Boucle pour chaque position
         for (Vector3f position : positions) {
             Matrix4f model = new Matrix4f().translation(position);

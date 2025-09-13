@@ -1,7 +1,9 @@
 package loader;
 
+import block.Coord;
 import org.joml.Matrix4d;
 import org.joml.Matrix4f;
+import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.lwjgl.BufferUtils;
 
@@ -73,66 +75,29 @@ public class UniformManager {
     }
 
     public void setFloat(String name, float value) {
-        Integer location = uniforms.get(name);
-        if (location != null) {
-            glUniform1f(location, value);
-        }
+        glUniform1f(glGetUniformLocation(programID, name), value);
     }
 
-    public void setVec2(String name, float x, float y) {
-        Integer location = uniforms.get(name);
-        if (location != null) {
-            glUniform2f(location, x, y);
-        }
+    public void setVec2(String name, Vector2f vec) {
+        glUniform2f(glGetUniformLocation(programID, name), vec.x, vec.y);
     }
 
     public void setVec3(String name, Vector3f vec) {
-        Integer location = uniforms.get(name);
-        if (location != null) {
-            glUniform3f(location, vec.x, vec.y, vec.z);
-        }
+            glUniform3f(glGetUniformLocation(programID, name), vec.x, vec.y, vec.z);
+    }
+
+    public void setVec3(String name, Coord vec) {
+        glUniform3f(glGetUniformLocation(programID, name), vec.x(), vec.y(), vec.z());
+
     }
 
     public void setInt(String name, int value) {
-        Integer location = uniforms.get(name);
-        if (location != null) {
-            glUniform1i(location, value);
-        }
+            glUniform1i(glGetUniformLocation(programID, name), value);
     }
 
     public void setMatrix4f(String name, Matrix4f matrix) {
-        Integer location = uniforms.get(name);
-        if (location != null) {
             FloatBuffer buffer = BufferUtils.createFloatBuffer(16);
             matrix.get(buffer);
-            glUniformMatrix4fv(location, false, buffer);
-        }
-    }
-
-    public void setVec3Array(String name, Vector3f[] values) {
-        for (int i = 0; i < values.length; i++) {
-            String arrayName = name + "[" + i + "]";
-            Integer location = uniforms.get(arrayName);
-            if (location != null) {
-                glUniform3f(location, values[i].x, values[i].y, values[i].z);
-            }
-        }
-    }
-
-    public void setFloatArray(String name, float[] values) {
-        for (int i = 0; i < values.length; i++) {
-            String arrayName = name + "[" + i + "]";
-            Integer location = uniforms.get(arrayName);
-            if (location != null) {
-                glUniform1f(location, values[i]);
-            }
-        }
-    }
-
-    public void setBool(String name, boolean value) {
-        Integer location = uniforms.get(name);
-        if (location != null) {
-            glUniform1i(location, value ? 1 : 0);
-        }
+            glUniformMatrix4fv(glGetUniformLocation(programID, name), false, buffer);
     }
 }
