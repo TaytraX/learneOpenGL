@@ -15,22 +15,21 @@ import java.nio.IntBuffer;
 
 import static block.BlockMaterial.*;
 import static org.lwjgl.opengl.GL11C.GL_TRIANGLES;
-import static org.lwjgl.opengl.GL11C.GL_UNSIGNED_INT;
-import static org.lwjgl.opengl.GL11C.glDrawElements;
 import static org.lwjgl.opengl.GL15.*;
+import static org.lwjgl.opengl.GL15C.glBindBuffer;
 import static org.lwjgl.opengl.GL20.glEnableVertexAttribArray;
 import static org.lwjgl.opengl.GL20.glVertexAttribPointer;
 import static org.lwjgl.opengl.GL30.*;
 import static org.lwjgl.opengl.GL30C.glBindVertexArray;
 
 public class MeshRender2 {
-    private int VAO, VBO, EBO, textureVBO;
+    private int lightingVAO, VAO, VBO, EBO, textureVBO;
 
     private final Shader shader, lightShader;
-    private final Texture texture;
+    private final Texture texture, texture_specular;
     private final Block[] block = {
             new Block(new Vector3f(1f), new Coord(0, 0, 0), LIGHT),
-            new Block(new Vector3f(6.0f, 6.0f, 6.0f), new Coord(-8.0f, -3.0f, 4.0f), GRASS),
+            new Block(new Vector3f(6.0f, 6.0f, 6.0f), new Coord(-8.0f, -3.0f, 4.0f), WOOD),
     };
 
     private final Coord lightPos = block[0].position();
@@ -101,10 +100,18 @@ public class MeshRender2 {
     };
 
     private final float[] textureCoords = {
-            1.0f, 1.0f,
-            1.0f, 0.0f,
-            0.0f, 0.0f,
-            0.0f, 1.0f
+            // Face 1 (vertices 0-3)
+            1.0f, 1.0f,  1.0f, 0.0f,  0.0f, 0.0f,  0.0f, 1.0f,
+            // Face 2 (vertices 4-7)
+            1.0f, 1.0f,  1.0f, 0.0f,  0.0f, 0.0f,  0.0f, 1.0f,
+            // Face 3 (vertices 8-11)
+            1.0f, 1.0f,  1.0f, 0.0f,  0.0f, 0.0f,  0.0f, 1.0f,
+            // Face 4 (vertices 12-15)
+            1.0f, 1.0f,  1.0f, 0.0f,  0.0f, 0.0f,  0.0f, 1.0f,
+            // Face 5 (vertices 16-19)
+            1.0f, 1.0f,  1.0f, 0.0f,  0.0f, 0.0f,  0.0f, 1.0f,
+            // Face 6 (vertices 20-23)
+            1.0f, 1.0f,  1.0f, 0.0f,  0.0f, 0.0f,  0.0f, 1.0f
     };
 
     public MeshRender2() {
@@ -112,12 +119,14 @@ public class MeshRender2 {
         lightShader = new Shader("light_emissive");
         try {
             texture = new Texture("container2");
+            texture_specular = new Texture("container2_specular");
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
     public void initialize() {
+        lightingVAO = glGenVertexArrays();
         VAO = glGenVertexArrays();
         VBO = glGenBuffers();
         EBO = glGenBuffers();
@@ -136,8 +145,6 @@ public class MeshRender2 {
         FloatBuffer textureBuffer = MemoryUtil.memAllocFloat(textureCoords.length);
         textureBuffer.put(textureCoords).flip();
 
-        glBindVertexArray(VAO);
-
         glBindBuffer(GL_ARRAY_BUFFER, VBO);
         glBufferData(GL_ARRAY_BUFFER, vertexBuffer, GL_STATIC_DRAW);
         glVertexAttribPointer(0, 3, GL_FLOAT, false, 6 * Float.BYTES, 0);
@@ -146,52 +153,62 @@ public class MeshRender2 {
         glVertexAttribPointer(1, 3, GL_FLOAT, false, 6 * Float.BYTES, 3 * Float.BYTES);
         glEnableVertexAttribArray(1);
 
+        glBindBuffer(GL_ARRAY_BUFFER, textureVBO);
+        glBufferData(GL_ARRAY_BUFFER, textureBuffer, GL_STATIC_DRAW);
         glVertexAttribPointer(2, 2, GL_FLOAT, false, 2 * Float.BYTES, 0);
         glEnableVertexAttribArray(2);
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexBuffer, GL_STATIC_DRAW);
-        glBindVertexArray(0);
+
+        shader.use();
+        shader.getUniforms().setInt("material.diffuse", 0);
+        shader.getUniforms().setInt("material.specular", 1);
     }
 
     public void render(Camera camera) {
-        glBindVertexArray(VAO);
-        Matrix4f model;
+        for (Block b : block) {
+            shader.use();
+            shader.getUniforms().setVec3("light.position", lightPos);
+            shader.getUniforms().setVec3("viewPos", camera.getPosition());
 
-        for (int i = 0; i < block.length; i++) {
-            Block aBlock = block[i];
-            model = new Matrix4f()
-                    .translation(new Vector3f(aBlock.position().x(), aBlock.position().y(), aBlock.position().z()))
-                    .scale(aBlock.size());
+            // light properties
+            shader.getUniforms().setVec3("light.ambient", b.material().getAmbient());
+            shader.getUniforms().setVec3("light.diffuse", b.material().getAmbient());
+            shader.getUniforms().setVec3("light.specular", b.material().getAmbient());
 
-            if (i == 0) {
-                // Source lumineuse
-                lightShader.use();  // Shader émissif
-                lightShader.getUniforms().setMatrix4f("model", model);
-                lightShader.getUniforms().setMatrix4f("view", camera.getView());
-                lightShader.getUniforms().setMatrix4f("projection", camera.getProjection());
-                lightShader.getUniforms().setVec3("lightColor", aBlock.material().getAmbient());
-            } else {
-                // Objets éclairés
-                shader.use();  // Shader Phong
-                shader.getUniforms().setMatrix4f("model", model);
-                shader.getUniforms().setMatrix4f("view", camera.getView());
-                shader.getUniforms().setVec3("viewPos", camera.getPosition());
-                shader.getUniforms().setMatrix4f("projection", camera.getProjection());
-                shader.getUniforms().setVec3("lightColor", new Vector3f(0.6f));
-                shader.getUniforms().setVec3("lightPos", lightPos);
-                shader.getUniforms().setVec3("material.ambient", aBlock.material().getAmbient());
-                shader.getUniforms().setInt("material.diffuse", 0);
-                shader.getUniforms().setVec3("material.specular", aBlock.material().getSpecular());
-                shader.getUniforms().setFloat("material.shininess", aBlock.material().getShininess());
-            }
+            // material properties
+            shader.getUniforms().setFloat("material.shininess", 64.0f);
+
+            shader.getUniforms().setMatrix4f("projection", camera.getProjection());
+            shader.getUniforms().setMatrix4f("view", camera.getView());
+
+            // world transformation
+            Matrix4f model = new Matrix4f();
+
+            shader.getUniforms().setMatrix4f("model", model);
 
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, texture.getTextureID());
 
-            glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_2D, texture_specular.getTextureID());
+
+            glBindVertexArray(VAO);
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+
+            lightShader.use();
+            lightShader.getUniforms().setMatrix4f("projection", camera.getProjection());
+            lightShader.getUniforms().setMatrix4f("view", camera.getView());
+
+            model.translation(lightPos.x(), lightPos.y(), lightPos.z())
+                    .scale(b.size());
+
+            lightShader.getUniforms().setMatrix4f("model", model);
+
+            glBindVertexArray(lightingVAO);
+            glDrawArrays(GL_TRIANGLES, 0, 36);
         }
-        glBindVertexArray(0);
     }
 
     public void cleanup() {
