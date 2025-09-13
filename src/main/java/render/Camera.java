@@ -158,7 +158,6 @@ public class Camera {
                 new Vector3f(cameraPos).add(cameraFront),
                 cameraUp
         );
-        System.out.println("Camera Position: " + cameraPos);
         matrixBufferView.clear();
         view.get(matrixBufferView);
     }

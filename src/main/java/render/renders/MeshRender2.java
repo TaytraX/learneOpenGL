@@ -158,7 +158,10 @@ public class MeshRender2 {
                 shader.getUniforms().setVec3("objectColor", aBlock.color());
                 shader.getUniforms().setVec3("lightColor", new Vector3f(0.6f));
                 shader.getUniforms().setVec3("lightPos", lightPos);
-                shader.getUniforms().setVec3("viewPos", camera.getPosition());
+                shader.getUniforms().setVec3("material.ambient", new Vector3f(1.0f, 0.5f, 0.31f));
+                shader.getUniforms().setVec3("material.diffuse", new Vector3f(1.0f, 0.5f, 0.31f));
+                shader.getUniforms().setVec3("material.specular", new Vector3f(0.5f, 0.5f, 0.5f));
+                shader.getUniforms().setFloat("material.shininess", 32.0f);
             }
 
             glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);

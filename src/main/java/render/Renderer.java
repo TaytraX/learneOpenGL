@@ -20,7 +20,7 @@ public class Renderer {
     public int render = 2;
 
     public Renderer() {
-        window = new Window("Iso_Minecraft", width, height, true);
+        window = new Window("Learn_OpenGL", width, height, true);
         camera = new Camera(deltaTime, (float) width/height);
 
         switch(render) {

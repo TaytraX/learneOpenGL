@@ -21,7 +21,7 @@ public class UniformManager {
         this.programID = programID;
     }
 
-    void createUniform(String name) {
+    public void createUniform(String name) {
         int location = glGetUniformLocation(programID, name);
         uniforms.put(name, location);
     }
@@ -45,12 +45,27 @@ public class UniformManager {
 
     String extractUniformName(String uniformLine) {
         String parts = uniformLine.split("//")[0].trim();
-
         if (!parts.startsWith("uniform")) return null;
 
-        Pattern pattern = Pattern.compile("uniform\\s+\\w+\\s+(\\w+)\\s*(?:\\[\\d+\\])?\\s*;");
+        // Nouvelle regex pour gérer les arrays
+        Pattern pattern = Pattern.compile("uniform\\s+\\w+\\s+(\\w+)(?:\\s*\\[\\s*(\\d+)\\s*\\])?\\s*;");
         Matcher matcher = pattern.matcher(parts);
-        return matcher.find() ? matcher.group(1) : null;
+
+        if (matcher.find()) {
+            String uniformName = matcher.group(1);
+            String arraySize = matcher.group(2);
+
+            if (arraySize != null) {
+                // C'est un array, créer les uniforms individuels
+                int size = Integer.parseInt(arraySize);
+                for (int i = 0; i < size; i++) {
+                    createUniform(uniformName + "[" + i + "]");
+                }
+                return null; // Pas besoin de créer l'uniform de base
+            }
+            return uniformName;
+        }
+        return null;
     }
 
     void cleanup() {
@@ -91,6 +106,33 @@ public class UniformManager {
             FloatBuffer buffer = BufferUtils.createFloatBuffer(16);
             matrix.get(buffer);
             glUniformMatrix4fv(location, false, buffer);
+        }
+    }
+
+    public void setVec3Array(String name, Vector3f[] values) {
+        for (int i = 0; i < values.length; i++) {
+            String arrayName = name + "[" + i + "]";
+            Integer location = uniforms.get(arrayName);
+            if (location != null) {
+                glUniform3f(location, values[i].x, values[i].y, values[i].z);
+            }
+        }
+    }
+
+    public void setFloatArray(String name, float[] values) {
+        for (int i = 0; i < values.length; i++) {
+            String arrayName = name + "[" + i + "]";
+            Integer location = uniforms.get(arrayName);
+            if (location != null) {
+                glUniform1f(location, values[i]);
+            }
+        }
+    }
+
+    public void setBool(String name, boolean value) {
+        Integer location = uniforms.get(name);
+        if (location != null) {
+            glUniform1i(location, value ? 1 : 0);
         }
     }
 }
