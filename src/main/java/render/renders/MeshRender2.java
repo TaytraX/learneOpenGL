@@ -14,6 +14,9 @@ import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 
 import static block.BlockMaterial.*;
+import static java.lang.Math.cos;
+import static java.lang.Math.sin;
+import static org.lwjgl.glfw.GLFW.glfwGetTime;
 import static org.lwjgl.opengl.GL11C.GL_TRIANGLES;
 import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL15C.glBindBuffer;
@@ -23,7 +26,7 @@ import static org.lwjgl.opengl.GL30.*;
 import static org.lwjgl.opengl.GL30C.glBindVertexArray;
 
 public class MeshRender2 {
-    private int lightingVAO, VAO, VBO, EBO, textureVBO;
+    private int lightingVAO, VAO, VBO;
 
     private final Shader shader, lightShader;
     private final Texture texture, texture_specular;
@@ -32,86 +35,53 @@ public class MeshRender2 {
             new Block(new Vector3f(6.0f, 6.0f, 6.0f), new Coord(-8.0f, -3.0f, 4.0f), WOOD),
     };
 
+    Matrix4f model = new Matrix4f();
+    Matrix4f modelLight = new Matrix4f();
     private final Coord lightPos = block[0].position();
 
-    private final float[][] vertices = {
-            {
-                    -0.5f, -0.5f, -0.5f,     0.0f,  0.0f, -1.0f,
-                     0.5f, -0.5f, -0.5f,     0.0f,  0.0f, -1.0f,
-                     0.5f,  0.5f, -0.5f,     0.0f,  0.0f, -1.0f,
-                    -0.5f,  0.5f, -0.5f,     0.0f,  0.0f, -1.0f
-            },
-            {
-                    -0.5f, -0.5f, 0.5f,      0.0f,  0.0f, 1.0f,
-                     0.5f, -0.5f, 0.5f,      0.0f,  0.0f, 1.0f,
-                     0.5f,  0.5f, 0.5f,      0.0f,  0.0f, 1.0f,
-                    -0.5f,  0.5f, 0.5f,      0.0f,  0.0f, 1.0f,
-            },
-            {
-                    -0.5f,  0.5f,  0.5f,    -1.0f,  0.0f,  0.0f,
-                    -0.5f,  0.5f, -0.5f,    -1.0f,  0.0f,  0.0f,
-                    -0.5f, -0.5f, -0.5f,    -1.0f,  0.0f,  0.0f,
-                    -0.5f, -0.5f,  0.5f,    -1.0f,  0.0f,  0.0f
-            },
-            {
-                    0.5f,  0.5f,  0.5f,      1.0f,  0.0f,  0.0f,
-                    0.5f,  0.5f, -0.5f,      1.0f,  0.0f,  0.0f,
-                    0.5f, -0.5f, -0.5f,      1.0f,  0.0f,  0.0f,
-                    0.5f, -0.5f,  0.5f,      1.0f,  0.0f,  0.0f
-            },
-            {
-                    -0.5f, -0.5f, -0.5f,     0.0f, -1.0f,  0.0f,
-                     0.5f, -0.5f, -0.5f,     0.0f, -1.0f,  0.0f,
-                     0.5f, -0.5f,  0.5f,     0.0f, -1.0f,  0.0f,
-                    -0.5f, -0.5f,  0.5f,     0.0f, -1.0f,  0.0f
-            },
-            {
-                    -0.5f, 0.5f, -0.5f,     0.0f,  1.0f,  0.0f,
-                     0.5f, 0.5f, -0.5f,     0.0f,  1.0f,  0.0f,
-                     0.5f, 0.5f,  0.5f,     0.0f,  1.0f,  0.0f,
-                    -0.5f, 0.5f,  0.5f,     0.0f,  1.0f,  0.0f
-            }
-    };
+    private final float[] vertices = {
+            // positions          // normals           // texture coords
+            -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f,  0.0f,
+            0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f,  0.0f,
+            0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f,  1.0f,
+            0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  1.0f,  1.0f,
+            -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f,  1.0f,
+            -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,  0.0f,  0.0f,
 
-    private final int[] indices = {
-            // face 1
-            0, 1, 2,  // Triangle 1
-            2, 3, 0,   // Triangle 2
+            -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f,  0.0f,
+            0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f,  0.0f,
+            0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f,  1.0f,
+            0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  1.0f,  1.0f,
+            -0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f,  1.0f,
+            -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.0f,  0.0f,
 
-            //face 2
-            4, 5, 6,  // Triangle 1
-            6, 7, 4,    // Triangle 2
+            -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
+            -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  1.0f,  1.0f,
+            -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
+            -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
+            -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  0.0f,  0.0f,
+            -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
 
-            //face 3
-            8, 9, 10,  // Triangle 1
-            10, 11, 8,   // Triangle 2
+            0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
+            0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  1.0f,  1.0f,
+            0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
+            0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,  0.0f,  1.0f,
+            0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  0.0f,  0.0f,
+            0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  1.0f,  0.0f,
 
-            //face 4
-            12, 13, 14,  // Triangle 1
-            14, 15, 12,   // Triangle 2
+            -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f,  1.0f,
+            0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  1.0f,  1.0f,
+            0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f,  0.0f,
+            0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  1.0f,  0.0f,
+            -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,  0.0f,  0.0f,
+            -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,  0.0f,  1.0f,
 
-            //face 5
-            16, 17, 18,  // Triangle 1
-            18, 19, 16,   // Triangle 2
-
-            //face 6
-            20, 21, 22,  // Triangle 1
-            22, 23, 20   // Triangle 2
-    };
-
-    private final float[] textureCoords = {
-            // Face 1 (vertices 0-3)
-            1.0f, 1.0f,  1.0f, 0.0f,  0.0f, 0.0f,  0.0f, 1.0f,
-            // Face 2 (vertices 4-7)
-            1.0f, 1.0f,  1.0f, 0.0f,  0.0f, 0.0f,  0.0f, 1.0f,
-            // Face 3 (vertices 8-11)
-            1.0f, 1.0f,  1.0f, 0.0f,  0.0f, 0.0f,  0.0f, 1.0f,
-            // Face 4 (vertices 12-15)
-            1.0f, 1.0f,  1.0f, 0.0f,  0.0f, 0.0f,  0.0f, 1.0f,
-            // Face 5 (vertices 16-19)
-            1.0f, 1.0f,  1.0f, 0.0f,  0.0f, 0.0f,  0.0f, 1.0f,
-            // Face 6 (vertices 20-23)
-            1.0f, 1.0f,  1.0f, 0.0f,  0.0f, 0.0f,  0.0f, 1.0f
+            -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  1.0f,
+            0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  1.0f,  1.0f,
+            0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f,  0.0f,
+            0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  1.0f,  0.0f,
+            -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  0.0f,
+            -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,  0.0f,  1.0f
     };
 
     public MeshRender2() {
@@ -129,37 +99,28 @@ public class MeshRender2 {
         lightingVAO = glGenVertexArrays();
         VAO = glGenVertexArrays();
         VBO = glGenBuffers();
-        EBO = glGenBuffers();
-        textureVBO = glGenBuffers();
 
-        FloatBuffer vertexBuffer = MemoryUtil.memAllocFloat(vertices.length * vertices[0].length);
-
-        for (float[] face : vertices) {
-            vertexBuffer.put(face);
-        }
-        vertexBuffer.flip();
-
-        IntBuffer indexBuffer = MemoryUtil.memAllocInt(indices.length);
-        indexBuffer.put(indices).flip();
-
-        FloatBuffer textureBuffer = MemoryUtil.memAllocFloat(textureCoords.length);
-        textureBuffer.put(textureCoords).flip();
+        FloatBuffer vertexBuffer = MemoryUtil.memAllocFloat(vertices.length);
+        vertexBuffer.put(vertices).flip();
 
         glBindBuffer(GL_ARRAY_BUFFER, VBO);
         glBufferData(GL_ARRAY_BUFFER, vertexBuffer, GL_STATIC_DRAW);
-        glVertexAttribPointer(0, 3, GL_FLOAT, false, 6 * Float.BYTES, 0);
+
+        glBindVertexArray(VAO);
+
+        glVertexAttribPointer(0, 3, GL_FLOAT, false, 8 * Float.BYTES, 0);
         glEnableVertexAttribArray(0);
-
-        glVertexAttribPointer(1, 3, GL_FLOAT, false, 6 * Float.BYTES, 3 * Float.BYTES);
+        glVertexAttribPointer(1, 3, GL_FLOAT, false, 8 * Float.BYTES, 3 * Float.BYTES);
         glEnableVertexAttribArray(1);
-
-        glBindBuffer(GL_ARRAY_BUFFER, textureVBO);
-        glBufferData(GL_ARRAY_BUFFER, textureBuffer, GL_STATIC_DRAW);
-        glVertexAttribPointer(2, 2, GL_FLOAT, false, 2 * Float.BYTES, 0);
+        glVertexAttribPointer(2, 2, GL_FLOAT, false, 8 * Float.BYTES, 6 * Float.BYTES);
         glEnableVertexAttribArray(2);
 
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexBuffer, GL_STATIC_DRAW);
+        glBindVertexArray(lightingVAO);
+
+        glBindBuffer(GL_ARRAY_BUFFER, VBO);
+        glBufferData(GL_ARRAY_BUFFER, vertexBuffer, GL_STATIC_DRAW);
+        glVertexAttribPointer(0, 3, GL_FLOAT, false, 8 * Float.BYTES, 0);
+        glEnableVertexAttribArray(0);
 
         shader.use();
         shader.getUniforms().setInt("material.diffuse", 0);
@@ -167,48 +128,59 @@ public class MeshRender2 {
     }
 
     public void render(Camera camera) {
-        for (Block b : block) {
-            shader.use();
-            shader.getUniforms().setVec3("light.position", lightPos);
-            shader.getUniforms().setVec3("viewPos", camera.getPosition());
+        renderLightBlock(camera);
+        renderBlock(camera);
+    }
 
-            // light properties
-            shader.getUniforms().setVec3("light.ambient", b.material().getAmbient());
-            shader.getUniforms().setVec3("light.diffuse", b.material().getAmbient());
-            shader.getUniforms().setVec3("light.specular", b.material().getAmbient());
-
-            // material properties
-            shader.getUniforms().setFloat("material.shininess", 64.0f);
-
-            shader.getUniforms().setMatrix4f("projection", camera.getProjection());
-            shader.getUniforms().setMatrix4f("view", camera.getView());
-
-            // world transformation
-            Matrix4f model = new Matrix4f();
-
-            shader.getUniforms().setMatrix4f("model", model);
-
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, texture.getTextureID());
-
-            glActiveTexture(GL_TEXTURE1);
-            glBindTexture(GL_TEXTURE_2D, texture_specular.getTextureID());
-
-            glBindVertexArray(VAO);
-            glDrawArrays(GL_TRIANGLES, 0, 36);
-
+    public void renderLightBlock(Camera camera) {
             lightShader.use();
             lightShader.getUniforms().setMatrix4f("projection", camera.getProjection());
             lightShader.getUniforms().setMatrix4f("view", camera.getView());
 
-            model.translation(lightPos.x(), lightPos.y(), lightPos.z())
-                    .scale(b.size());
+            modelLight.translation(lightPos.x(), lightPos.y(), lightPos.z())
+                    .scale(block[0].size());
 
-            lightShader.getUniforms().setMatrix4f("model", model);
+            lightShader.getUniforms().setMatrix4f("modelLight", modelLight);
 
             glBindVertexArray(lightingVAO);
             glDrawArrays(GL_TRIANGLES, 0, 36);
-        }
+    }
+
+    public void renderBlock(Camera camera) {
+        shader.use();
+        shader.getUniforms().setVec3("light.position", lightPos);
+        shader.getUniforms().setVec3("viewPos", camera.getPosition());
+
+        // light properties
+        shader.getUniforms().setVec3("light.ambient", block[0].material().getAmbient());
+        shader.getUniforms().setVec3("light.diffuse", block[0].material().getDiffuseVec());
+        shader.getUniforms().setVec3("light.specular", block[0].material().getSpecular());
+
+        // material properties
+        shader.getUniforms().setFloat("material.shininess", block[0].material().getShininess());
+
+        shader.getUniforms().setMatrix4f("projection", camera.getProjection());
+        shader.getUniforms().setMatrix4f("view", camera.getView());
+
+        Vector3f pos = new Vector3f();
+        float newX = (float) (block[0].position().x() + 10 * cos(45 * (glfwGetTime() / 20)));
+        float newZ = (float) (block[0].position().z() + 10 * sin(45 * (glfwGetTime() / 20)));
+        float newY = (float) (block[0].position().y() + 10 * sin(45 * (glfwGetTime() / 18)));
+
+        // world transformation
+        model.translation(newX, newY, newZ).scale(block[1].size());
+        model.rotate(15 * (float) Math.toRadians(glfwGetTime() * 50) / 5, new Vector3f(1.0f, 0.3f, 0.5f).normalize());
+
+        shader.getUniforms().setMatrix4f("model", model);
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texture.getTextureID());
+
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, texture_specular.getTextureID());
+
+        glBindVertexArray(VAO);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
     }
 
     public void cleanup() {
@@ -217,7 +189,5 @@ public class MeshRender2 {
 
         glDeleteVertexArrays(VAO);
         glDeleteBuffers(VBO);
-        glDeleteBuffers(EBO);
-        glDeleteBuffers(textureVBO);
     }
 }

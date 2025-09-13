@@ -33,10 +33,10 @@ public enum BlockMaterial {
             new Vector3f(0.15f, 0.4f, 0.7f),      // diffuse - bleu eau
             new Vector3f(0.9f, 0.95f, 1.0f)),     // specular - très réfléchissant
 
-    LIGHT(1.0f,
+    LIGHT(8.0f,
             new Vector3f(1.0f, 1.0f, 1.0f),       // ambient - blanc pur
-            new Vector3f(1.0f, 1.0f, 1.0f),       // diffuse - blanc pur
-            0);                                            // specular - pas de reflets    // specular - pas de reflets (source lumineuse)
+            new Vector3f(0.2f, 0.2f, 0.2f),       // diffuse - blanc pur
+            new Vector3f(0.5f, 0.5f, 0.5f));                                            // specular - pas de reflets    // specular - pas de reflets (source lumineuse)
 
     private final float shininess;
     private final Vector3f specular;
