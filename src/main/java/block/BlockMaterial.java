@@ -3,7 +3,7 @@ package block;
 import org.joml.Vector3f;
 
 public enum BlockMaterial {
-    WOOD(32.0f,
+    WOOD(3.0f,
             new Vector3f(0.05f, 0.025f, 0.01f),   // ambient - très faible
             new Vector3f(0.6f, 0.3f, 0.1f),       // diffuse - brun chaud
             new Vector3f(0.1f, 0.1f, 0.1f)),      // specular - faible (mat)

@@ -36,16 +36,16 @@ public class Shader {
         String fragmentSource;
 
         // Try-with-resources pour auto-close
-        try (InputStream vertexInputStream = getClass().getResourceAsStream("/shader/" + shaderName + ".vs.glsl")) {
+        try (InputStream vertexInputStream = getClass().getResourceAsStream("/shader/vertex/" + shaderName + ".vert")) {
             if (vertexInputStream == null) {
-                throw new IOException("Vertex shader file not found: " + shaderName + ".vs.glsl");
+                throw new IOException("Vertex shader file not found: " + shaderName + ".vert");
             }
             vertexSource = new String(vertexInputStream.readAllBytes(), StandardCharsets.UTF_8);
         }
 
-        try (InputStream fragmentInputStream = getClass().getResourceAsStream("/shader/" + shaderName + ".fs.glsl")) {
+        try (InputStream fragmentInputStream = getClass().getResourceAsStream("/shader/fragment/" + shaderName + ".frag")) {
             if (fragmentInputStream == null) {
-                throw new IOException("Fragment shader file not found: " + shaderName + ".fs.glsl");
+                throw new IOException("Fragment shader file not found: " + shaderName + ".frag");
             }
             fragmentSource = new String(fragmentInputStream.readAllBytes(), StandardCharsets.UTF_8);
         }
