@@ -174,6 +174,10 @@ public class Camera {
         return cameraPos;
     }
 
+    public Vector3f getFront() {
+        return cameraFront;
+    }
+
     public void setDeltaTime(float deltatime) {
         this.deltaTime = deltatime;
     }

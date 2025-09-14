@@ -78,12 +78,12 @@ public class UniformManager {
         glUniform1f(glGetUniformLocation(programID, name), value);
     }
 
-    public void setVec2(String name, Vector2f vec) {
-        glUniform2f(glGetUniformLocation(programID, name), vec.x, vec.y);
+    public void setVec3(String name, float x, float y, float z) {
+            glUniform3f(glGetUniformLocation(programID, name), x, y, z);
     }
 
     public void setVec3(String name, Vector3f vec) {
-            glUniform3f(glGetUniformLocation(programID, name), vec.x, vec.y, vec.z);
+        glUniform3f(glGetUniformLocation(programID, name), vec.x, vec.y, vec.z);
     }
 
     public void setVec3(String name, Coord vec) {

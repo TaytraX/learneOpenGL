@@ -11,8 +11,11 @@ import render.Camera;
 
 import java.io.IOException;
 import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
 
 import static block.BlockMaterial.*;
+import static java.lang.Math.*;
+import static org.lwjgl.glfw.GLFW.glfwGetTime;
 import static org.lwjgl.opengl.GL11C.GL_TRIANGLES;
 import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL15C.glBindBuffer;
@@ -154,43 +157,65 @@ public class MeshRender2 {
     }
 
     public void renderBlock(Camera camera) {
-        for (Block block : block) {
-            for (Block light : blockLight) {
-                shader.use();
-                shader.getUniforms().setVec3("light.position", light.position());
-                shader.getUniforms().setVec3("viewPos", camera.getPosition());
+        shader.use();
+        shader.getUniforms().setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
+        shader.getUniforms().setVec3("dirLight.ambient", 0.05f, 0.05f, 0.05f);
+        shader.getUniforms().setVec3("dirLight.diffuse", 0.4f, 0.4f, 0.4f);
+        shader.getUniforms().setVec3("dirLight.specular", 0.5f, 0.5f, 0.5f);
+        // point light 1
+        shader.getUniforms().setVec3("pointLights[0].position", blockLight[0].position());
+        shader.getUniforms().setVec3("pointLights[0].ambient", 0.05f, 0.05f, 0.05f);
+        shader.getUniforms().setVec3("pointLights[0].diffuse", 0.8f, 0.8f, 0.8f);
+        shader.getUniforms().setVec3("pointLights[0].specular", 1.0f, 1.0f, 1.0f);
+        shader.getUniforms().setFloat("pointLights[0].constant", 1.0f);
+        shader.getUniforms().setFloat("pointLights[0].linear", 0.09f);
+        shader.getUniforms().setFloat("pointLights[0].quadratic", 0.032f);
+        // point light 2
+        shader.getUniforms().setVec3("pointLights[1].position", blockLight[1].position());
+        shader.getUniforms().setVec3("pointLights[1].ambient", 0.05f, 0.05f, 0.05f);
+        shader.getUniforms().setVec3("pointLights[1].diffuse", 0.8f, 0.8f, 0.8f);
+        shader.getUniforms().setVec3("pointLights[1].specular", 1.0f, 1.0f, 1.0f);
+        shader.getUniforms().setFloat("pointLights[1].constant", 1.0f);
+        shader.getUniforms().setFloat("pointLights[1].linear", 0.09f);
+        shader.getUniforms().setFloat("pointLights[1].quadratic", 0.032f);
+        // point light 3
+        shader.getUniforms().setVec3("pointLights[2].position", blockLight[2].position());
+        shader.getUniforms().setVec3("pointLights[2].ambient", 0.05f, 0.05f, 0.05f);
+        shader.getUniforms().setVec3("pointLights[2].diffuse", 0.8f, 0.8f, 0.8f);
+        shader.getUniforms().setVec3("pointLights[2].specular", 1.0f, 1.0f, 1.0f);
+        shader.getUniforms().setFloat("pointLights[2].constant", 1.0f);
+        shader.getUniforms().setFloat("pointLights[2].linear", 0.09f);
+        shader.getUniforms().setFloat("pointLights[2].quadratic", 0.032f);
+        // point light 4
+        shader.getUniforms().setVec3("pointLights[3].position", blockLight[3].position());
+        shader.getUniforms().setVec3("pointLights[3].ambient", 0.05f, 0.05f, 0.05f);
+        shader.getUniforms().setVec3("pointLights[3].diffuse", 0.8f, 0.8f, 0.8f);
+        shader.getUniforms().setVec3("pointLights[3].specular", 1.0f, 1.0f, 1.0f);
+        shader.getUniforms().setFloat("pointLights[3].constant", 1.0f);
+        shader.getUniforms().setFloat("pointLights[3].linear", 0.09f);
+        shader.getUniforms().setFloat("pointLights[3].quadratic", 0.032f);
+        // spotLight
+        shader.getUniforms().setVec3("viewPos", camera.getPosition());
 
-                // light properties
-                shader.getUniforms().setVec3("light.ambient", light.material().getAmbient());
-                shader.getUniforms().setVec3("light.diffuse", light.material().getDiffuseVec());
-                shader.getUniforms().setVec3("light.specular", light.material().getSpecular());
-            }
+        // material properties
+        shader.getUniforms().setFloat("material.shininess", block[0].material().getShininess());
 
-            // material properties
-            shader.getUniforms().setFloat("material.shininess", block.material().getShininess());
+        shader.getUniforms().setMatrix4f("projection", camera.getProjection());
+        shader.getUniforms().setMatrix4f("view", camera.getView());
 
-            shader.getUniforms().setMatrix4f("projection", camera.getProjection());
-            shader.getUniforms().setFloat("pointLights[0].constant", 1.0f);
-            shader.getUniforms().setMatrix4f("view", camera.getView());
+        // world transformation
+        model.translation(block[1].position().x(), block[1].position().y(), block[1].position().z()).scale(block[1].size());
 
-            // world transformation
-            model.translation(
-                    block.position().x(),
-                    block.position().y(),
-                    block.position().z()
-            ).scale(block.size());
+        shader.getUniforms().setMatrix4f("model", model);
 
-            shader.getUniforms().setMatrix4f("model", model);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texture.getTextureID());
 
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, texture.getTextureID());
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, texture_specular.getTextureID());
 
-            glActiveTexture(GL_TEXTURE1);
-            glBindTexture(GL_TEXTURE_2D, texture_specular.getTextureID());
-
-            glBindVertexArray(VAO);
-            glDrawArrays(GL_TRIANGLES, 0, 36);
-        }
+        glBindVertexArray(VAO);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
     }
 
     public void cleanup() {
