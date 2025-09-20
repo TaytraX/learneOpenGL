@@ -11,11 +11,9 @@ import render.Camera;
 
 import java.io.IOException;
 import java.nio.FloatBuffer;
-import java.nio.IntBuffer;
 
 import static block.BlockMaterial.*;
 import static java.lang.Math.*;
-import static org.lwjgl.glfw.GLFW.glfwGetTime;
 import static org.lwjgl.opengl.GL11C.GL_TRIANGLES;
 import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL15C.glBindBuffer;
