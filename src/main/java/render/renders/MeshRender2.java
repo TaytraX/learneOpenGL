@@ -38,7 +38,7 @@ public class MeshRender2 {
 
     private final Block[] block = {
             new Block(new Vector3f(6f), new Coord(-10f, 10f, 5), WOOD),
-            new Block(new Vector3f(6f), new Coord(20f, 38, 18f), WOOD),
+            new Block(new Vector3f(6f), new Coord(13f, 3, 7f), WOOD),
             new Block(new Vector3f(6), new Coord(0.0f, -6.0f, 0.0f), WOOD),
             new Block(new Vector3f(6), new Coord(32.0f, 0.0f, -5.0f), WOOD),
             new Block(new Vector3f(6), new Coord(-25.0f, 0.0f, -15.0f), WOOD)
